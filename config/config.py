@@ -1,26 +1,53 @@
-from dotenv import load_dotenv
-import os
-from logging import Logger
+import json
 import logging
-import coloredlogs
 import sys
+import coloredlogs
 
-class Config(object):
-    def __init__(self):
-        load_dotenv()
-        self.greeting = os.getenv("GREETING", "default greeting")
+logger = logging.getLogger(__name__)
 
-        self.log_level = os.getenv("LOG_LEVEL", "INFO")
-        self.log_file = os.getenv("LOG_FILE", "default_log.txt")
+class Config:
+    _instance = None
 
-    def configure_logger(self, logger: Logger):
-        file_handler = logging.FileHandler(self.log_file)
-        file_handler.setLevel(logging._nameToLevel[self.log_level])
-        logger.addHandler(file_handler)
+    def __new__(cls, config_file_path: str):
+        if cls._instance is None:
+            cls._instance = super(Config, cls).__new__(cls) # use the type constructor to create the instance
+            cls._instance._initialize(config_file_path) # initialize the instance using metaclass member function
+        return cls._instance
+
+    def _initialize(self, config_file_path: str):
+        with open(config_file_path) as config_file:
+            self.config = json.load(config_file)
+
+        if not self.config:
+            raise ValueError("Config file is empty")
+
+        if not self.config.get('log'):
+            logger.warning("No logging configuration found in config file")
         
-        stdout_handler = logging.StreamHandler(sys.stdout)
-        stdout_handler.setLevel(logging._nameToLevel[self.log_level])
-        logger.addHandler(stdout_handler)
-        
-        coloredlogs.install(level=self.log_level, logger=logger)
+        self.logging = self.LoggingConfig(self.config.get('log', {}))
 
+    def get(self, key):
+        """Access configuration settings by key."""
+        return self.config.get(key)
+
+    class LoggingConfig:
+        def __init__(self, log_config):
+            self.log_file = log_config.get('file', 'default.log')
+            self.log_level = log_config.get('level', 'INFO')
+
+        def configure_logger(self, logger: logging.Logger):
+            logger.handlers = []
+
+            # File handler
+            file_handler = logging.FileHandler(self.log_file)
+            file_handler.setLevel(logging._nameToLevel[self.log_level.upper()])
+            logger.addHandler(file_handler)
+
+            # Standard output handler
+            stdout_handler = logging.StreamHandler(sys.stdout)
+            stdout_handler.setLevel(logging._nameToLevel[self.log_level.upper()])
+            logger.addHandler(stdout_handler)
+
+            coloredlogs.install(level=self.log_level.upper(), logger=logger)
+
+config = Config("config/config.json")
