@@ -11,7 +11,7 @@ pydantic_core==2.23.4
 pyreadline3==3.5.4
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
-quanta-client @ https://github.com/danielkennedy1/quanta-api/releases/download/v1.1.0/quanta-client.zip#sha256=9aa960f024d58629e7a36ecc4e327f3cc427b61053837455082a5adb6cefaf85
+quanta-client @ https://github.com/danielkennedy1/quanta-api/releases/download/v1.2.0/quanta-client.zip#sha256=cd733c3bb38e8ef4ccd224c9ad085337c6e9b38d611cdbd9bd5abe50b498eea3
 six==1.16.0
 typing-inspect==0.9.0
 typing_extensions==4.12.2
