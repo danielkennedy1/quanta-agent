@@ -1,14 +1,16 @@
 import struct
+import socket
+from typing import Tuple
 from datetime import datetime
 import logging
 
-from typing import Tuple
+from device.executor import CommandExecutor
+
 logger = logging.getLogger(__name__)
 
-import socket
 PROTOCOL_START_BYTE = 0x02
 
-class Heater(object):
+class Heater(CommandExecutor):
     protocol_function_table = {
         "heartbeat": 0x00,
         "get_system_time": 0x01,

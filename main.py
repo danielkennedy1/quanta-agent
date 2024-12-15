@@ -1,5 +1,6 @@
 import logging
 from time import sleep
+import datetime
 
 from quanta_client.configuration import Configuration
 from quanta_client.api_client import ApiClient
@@ -7,6 +8,8 @@ from quanta_client.api.default_api import DefaultApi
 from quanta_client.exceptions import ApiException
 
 from device.heater import Heater
+from device.computer import Computer
+
 from config.config import Config
 from comms.client import Client
 
@@ -20,6 +23,9 @@ if __name__ == "__main__":
     config.logging.configure_logger(root_logger)
 
     heater = Heater(config.devices.device_list[0].ip, config.devices.device_list[0].port)
+    computer = Computer()
+
+
 
     quanta_config = Configuration(host=config.server.base_url)
     client = ApiClient(quanta_config)
@@ -31,6 +37,7 @@ if __name__ == "__main__":
 
     while True:
         try:
+            logger.info("Dealing with heater")
             temperature_result = heater.get_avg_temperature_for_minute()
             if temperature_result is not None:
                 client.send_temperature_to_server(*temperature_result)
@@ -47,6 +54,24 @@ if __name__ == "__main__":
             except ApiException as e:
                 logger.error(f"Exception when calling DefaultApi->command_get_by_device_id: {e}")
                 heater_commands = []
+
+            logger.info("Dealing with computer")
+
+
+            cpu_usage = computer.get_cpu_usage()
+            client.send_cpu_to_server(cpu_usage, datetime.datetime.now())
+
+            memory_usage = computer.get_memory_percent()
+            client.send_memory_to_server(memory_usage, datetime.datetime.now())
+
+            try:
+                computer_commands = client.get_computer_commands_from_server()
+                for command in computer_commands:
+                    logger.info(f"Received command: {command}")
+                    computer.execute(command.command)
+            except ApiException as e:
+                logger.error(f"Exception when calling DefaultApi->command_get_by_device_id: {e}")
+                computer_commands = []
 
 
             logger.info("Sleeping..")
