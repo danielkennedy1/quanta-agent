@@ -1,6 +1,6 @@
 import logging
 
-from device.device import Device
+from device.heater import Heater
 from config.config import Config
 
 logging.basicConfig(level=logging.DEBUG)
@@ -13,9 +13,11 @@ if __name__ == "__main__":
     config.logging.configure_logger(root_logger)
 
     logger.info("Starting device.py")
-    device = Device(config.devices.device_list[0].ip, config.devices.device_list[0].port)
+    heater = Heater(config.devices.device_list[0].ip, config.devices.device_list[0].port)
 
-    #device.get_heartbeat()
-    #device.get_system_time()
-    #logger.warning(device.get_avg_temperature_for_minute())
-    #logger.warning(device.get_uptime_for_minute())
+    #heater.get_heartbeat()
+    heater.get_system_time()
+    #logger.warning(heater.get_avg_temperature_for_minute())
+    #logger.warning(heater.get_uptime_for_minute())
+    #heater.set_temperature_for_duration(25, 60)
+    #heater.set_power_for_duration(True, 60)

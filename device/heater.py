@@ -5,39 +5,10 @@ import logging
 from typing import Tuple
 logger = logging.getLogger(__name__)
 
-
-
-def set_control_for_duration():
-    control = True
-    duration = 15        # 4-byte integer
-
-    payload = struct.pack('<?I', control, duration)
-    # Construct the packet to set the temperature for a duration
-    packet = send.construct_packet(protocol.protocol_function_table["set_control_for_duration"], payload)
-
-    print(f"complete packet: {packet.hex()}")
-    
-    # Send the packet to the ESP32
-    send.send_packet_to_esp32(packet)
-
-def set_temperature_for_duration():
-    target_temp = 45.0  # 4-byte float
-    duration = 15        # 4-byte integer
-
-    payload = struct.pack('<fI', target_temp, duration)
-    # Construct the packet to set the temperature for a duration
-    packet = send.construct_packet(protocol.protocol_function_table["set_temperature_for_duration"], payload)
-
-    print(f"complete packet: {packet.hex()}")
-    
-    # Send the packet to the ESP32
-    send.send_packet_to_esp32(packet)
-
-
 import socket
 PROTOCOL_START_BYTE = 0x02
 
-class Device(object):
+class Heater(object):
     protocol_function_table = {
         "heartbeat": 0x00,
         "get_system_time": 0x01,
@@ -111,6 +82,7 @@ class Device(object):
 
 
     def get_uptime_for_minute(self) -> Tuple[float, datetime] | None:
+        logger.info("Getting uptime for the next available minute")
         packet = self.construct_packet(self.protocol_function_table["get_uptime_for_minute"], b"")
 
         payload = self.send_packet(packet)
@@ -122,17 +94,38 @@ class Device(object):
         unix_timestamp: int = struct.unpack('<Q', payload[:8])[0]
         uptime = struct.unpack('<f', payload[8:12])[0]
 
-        print(f"Unix Timestamp: {unix_timestamp}")
+        logger.debug(f"Unix Timestamp: {unix_timestamp}")
 
         timestamp = datetime.fromtimestamp(float(unix_timestamp))
 
         timestamp_str = timestamp.strftime('%Y-%m-%d %H:%M:%S')
 
-        print("Payload Analysis:")
-        print(f"  Unix Timestamp: {unix_timestamp} ({timestamp_str} UTC)")
-        print(f"  Float Value: {uptime}")
+        logger.debug("Payload Analysis:")
+        logger.debug(f"  Unix Timestamp: {unix_timestamp} ({timestamp_str} UTC)")
+        logger.debug(f"  Float Value: {uptime}")
 
         return uptime, timestamp
+
+
+    def set_power_for_duration(self, power: bool, duration: int):
+        logger.info(f"Setting power to {power} for {duration} seconds")
+        payload = struct.pack('<?I', power, duration)
+        packet = self.construct_packet(self.protocol_function_table["set_control_for_duration"], payload)
+
+        logger.debug(f"complete packet: {packet.hex()}")
+        
+        self.send_packet(packet, expect_response=False)
+
+    def set_temperature_for_duration(self, target_temp: float, duration: int):
+        logger.info(f"Setting temperature to {target_temp} for {duration} seconds")
+        payload = struct.pack('<fI', target_temp, duration)
+        # Construct the packet to set the temperature for a duration
+        packet = self.construct_packet(self.protocol_function_table["set_temperature_for_duration"], payload)
+
+        logger.debug(f"complete packet: {packet.hex()}")
+        
+        # Send the packet to the ESP32
+        self.send_packet(packet)
 
 
 
