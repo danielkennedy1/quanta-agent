@@ -50,6 +50,21 @@ def register_to_server():
         logger.error(f"Exception when calling DefaultApi->device_create: {e}")
         exit(1)
 
+def send_temperature_to_server(temperature, timestamp):
+    try:
+        logger.info(f"Sending temperature: {temperature} at {timestamp}")
+        temperature_message = Message(device_id=heater_id, metric_id=temperature_id, metric_value=str(temperature), timestamp=timestamp.strftime('%Y-%m-%dT%H:%M:%SZ'))
+        api.message_create(temperature_message)
+    except ApiException as e:
+        logger.error(f"Exception when calling DefaultApi->message_create: {e}")
+
+def send_uptime_to_server(uptime, timestamp):
+    try:
+        logger.info(f"Sending uptime: {uptime} at {timestamp}")
+        uptime_message = Message(device_id=heater_id, metric_id=uptime_id, metric_value=str(uptime), timestamp=timestamp.strftime('%Y-%m-%dT%H:%M:%SZ'))
+        api.message_create(uptime_message)
+    except ApiException as e:
+        logger.error(f"Exception when calling DefaultApi->message_create: {e}")
 
 if __name__ == "__main__":
     config = Config("config/config.json")
@@ -63,33 +78,20 @@ if __name__ == "__main__":
 
     heater_id, temperature_id, uptime_id = register_to_server()
 
+    sleep_time = 5
+
     while True:
         try:
             temperature_result = heater.get_avg_temperature_for_minute()
+            if temperature_result is not None:
+                send_temperature_to_server(*temperature_result)
+
             uptime_result = heater.get_uptime_for_minute()
-
-            if temperature_result is None or uptime_result is None:
-                logger.error("No response received from ESP32")
-                continue
-
-            temperature, temperature_timestamp = temperature_result
-            uptime, uptime_timestamp = uptime_result
-
-            logger.info(f"Temperature: {temperature} at {temperature_timestamp}")
-            logger.info(f"Uptime: {uptime} at {uptime_timestamp}")
-
-            logger.info("Sending data to server")
-            temperature_message = Message(device_id=heater_id, metric_id=temperature_id, metric_value=str(temperature), timestamp=temperature_timestamp.strftime('%Y-%m-%dT%H:%M:%SZ'))
-            uptime_message = Message(device_id=heater_id, metric_id=uptime_id, metric_value=str(uptime), timestamp=uptime_timestamp.strftime('%Y-%m-%dT%H:%M:%SZ'))
-
-            api.message_create(temperature_message)
-            api.message_create(uptime_message)
-
-            logger.info("Data sent to server")
-
+            if uptime_result is not None:
+                send_uptime_to_server(*uptime_result)
 
             logger.info("Sleeping..")
-            sleep(5)
+            sleep(sleep_time)
         except ApiException as e:
             logger.error(f"Exception when calling DefaultApi->message_create: {e}")
 
