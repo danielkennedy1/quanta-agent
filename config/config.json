@@ -2,5 +2,15 @@
     "log": {
         "level": "INFO",
         "file": "log.txt"
+    },
+    "devices": [
+        {
+            "ip": "192.168.0.174",
+            "port": 1234
+        }
+    ],
+    "server": {
+        "port": 80,
+        "host": "http://quanta.dankennedy.ie/v1"
     }
 }

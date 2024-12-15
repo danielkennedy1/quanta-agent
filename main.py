@@ -1,19 +1,20 @@
 import logging
-import sys
-import json
-from metrics import get_metrics
-from model import SystemMetrics
-from config.config import config
 
-config.logging.configure_logger(logging.getLogger())
+from device.device import Device
+from config.config import Config
+
+logging.basicConfig(level=logging.DEBUG)
 
 logger = logging.getLogger(__name__)
+root_logger = logging.getLogger()
 
-logger.info(get_metrics()) # type: ignore
+if __name__ == "__main__":
+    config = Config("config/config.json")
+    config.logging.configure_logger(root_logger)
+    root_logger.setLevel(logging.DEBUG)
 
-with open(config.logging.log_file) as f:
-    deser = SystemMetrics.from_dict(json.load(f)) # type: ignore
+    logger.info("Starting device.py")
+    device = Device(config.devices.device_list[0].ip, config.devices.device_list[0].port)
 
-logger.info(deser)
-
-sys.exit()
+    device.get_heartbeat()
+    #device.get_system_time()

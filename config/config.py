@@ -2,8 +2,14 @@ import json
 import logging
 import sys
 import coloredlogs
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
+
+@dataclass
+class DeviceConfig:
+    ip: str
+    port: int
 
 class Config:
     _instance = None
@@ -25,6 +31,16 @@ class Config:
             logger.warning("No logging configuration found in config file")
         
         self.logging = self.LoggingConfig(self.config.get('log', {}))
+
+        if not self.config.get('server'):
+            logger.warning("No server configuration found in config file")
+
+        self.server = self.ServerConfig(self.config.get('server', {}))
+        
+        if not self.config.get('devices'):
+            logger.warning("No devices configuration found in config file")
+
+        self.devices = self.DeviceConfig(self.config.get('devices', []))
 
     def get(self, key):
         """Access configuration settings by key."""
@@ -49,5 +65,17 @@ class Config:
             logger.addHandler(stdout_handler)
 
             coloredlogs.install(level=self.log_level.upper(), logger=logger)
+
+    class ServerConfig:
+        def __init__(self, server_config):
+            self.host = server_config.get('host', 'http://127.0.0.1')
+            self.port = server_config.get('port', 8000)
+
+    class DeviceConfig:
+        def __init__(self, devices_config_list):
+            self.device_list = [DeviceConfig(device_config["ip"], device_config["port"]) for device_config in devices_config_list]
+            self.device_count = len(self.device_list)
+
+
 
 config = Config("config/config.json")
