@@ -26,6 +26,16 @@ class Heater(object):
         self.ip = ip
         self.port = port
 
+    def execute(self, command: str):
+        logger.info(f"Executing command: {command}")
+        command_args = command.split(" ")
+        if command_args[0] == "temperature":
+            self.set_temperature_for_duration(float(command_args[1]), int(command_args[2]))
+        elif command_args[0] == "power":
+            self.set_power_for_duration(bool(command_args[1]), int(command_args[2]))
+        else:
+            logger.error("Invalid command")
+
     def get_heartbeat(self):
         logger.info("Getting heartbeat")
         packet = self.construct_packet(self.protocol_function_table["heartbeat"], b"")

@@ -90,19 +90,17 @@ if __name__ == "__main__":
             if uptime_result is not None:
                 send_uptime_to_server(*uptime_result)
 
+            try:
+                heater_commands = api.command_get_by_device_id(heater_id)
+                for command in heater_commands:
+                    logger.info(f"Received command: {command}")
+                    heater.execute(command.command)
+            except ApiException as e:
+                logger.error(f"Exception when calling DefaultApi->command_get_by_device_id: {e}")
+                heater_commands = []
+
+
             logger.info("Sleeping..")
             sleep(sleep_time)
         except ApiException as e:
             logger.error(f"Exception when calling DefaultApi->message_create: {e}")
-
-
-
-
-
-
-    #logger.warning(heater.get_avg_temperature_for_minute())
-    #logger.warning(heater.get_uptime_for_minute())
-    #heater.set_temperature_for_duration(25, 60)
-    #heater.set_power_for_duration(True, 60)
-
-
