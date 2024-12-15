@@ -1,6 +1,6 @@
 {
     "log": {
-        "level": "INFO",
+        "level": "DEBUG",
         "file": "log.txt"
     },
     "devices": [

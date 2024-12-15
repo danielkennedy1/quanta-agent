@@ -118,14 +118,12 @@ class Device(object):
 
         logger.debug(f"Received response: {payload}")
 
-        unix_timestamp: int = struct.unpack('<Q', payload[:8])[0]
-        
-        logger.debug(f"Unix Timestamp: {unix_timestamp}")
+        # clip null bytes from the end of the payload string
+        payload = payload.rstrip(b'\x00')
 
-        timestamp = datetime.fromtimestamp(float(unix_timestamp))
-        timestamp_str = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = datetime.fromisoformat(payload.decode('ascii'))
 
-        logger.info(f"Received system time: {timestamp_str} UTC")
+        logger.info(f"System time: {timestamp}")
 
         return timestamp
 
@@ -148,13 +146,14 @@ class Device(object):
                     logger.debug(f"start_byte: {response[0]:02X}")
                     logger.debug(f"function_id: {response[1]:02X}")
                     logger.debug(f"length: {response[2]}")
+                    length = response[2]
                     payload = response[3:-1]
                     logger.debug(f"payload (hex): {' '.join(f'{byte:02X}' for byte in payload)}")
                     try:
                         logger.debug(f"payload (ascii): {payload.decode('ascii')}")
                     except UnicodeDecodeError:
                         logger.debug("payload (ascii): <non-ascii data>")
-                    return payload
+                    return payload[:length]
         except Exception as e:
             logger.error(f"Error: {e}")
         return bytes()

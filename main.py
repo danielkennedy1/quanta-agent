@@ -11,10 +11,9 @@ root_logger = logging.getLogger()
 if __name__ == "__main__":
     config = Config("config/config.json")
     config.logging.configure_logger(root_logger)
-    root_logger.setLevel(logging.DEBUG)
 
     logger.info("Starting device.py")
     device = Device(config.devices.device_list[0].ip, config.devices.device_list[0].port)
 
     device.get_heartbeat()
-    #device.get_system_time()
+    device.get_system_time()
