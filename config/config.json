@@ -10,7 +10,9 @@
         }
     ],
     "server": {
-        "port": 80,
-        "host": "http://quanta.dankennedy.ie/v1"
+        "protocol": "http",
+        "host": "127.0.0.1",
+        "port": 8000,
+        "path": "/v1"
     }
 }

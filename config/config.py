@@ -68,8 +68,12 @@ class Config:
 
     class ServerConfig:
         def __init__(self, server_config):
-            self.host = server_config.get('host', 'http://127.0.0.1')
+            logger.info("Server config: %s", server_config)
+            self.protocol = server_config.get('protocol', 'http')
+            self.host = server_config.get('host', 'localhost')
             self.port = server_config.get('port', 8000)
+            self.path = server_config.get('path', '/')
+            self.base_url = f"{self.protocol}://{self.host}:{self.port}{self.path}"
 
     class DeviceConfig:
         def __init__(self, devices_config_list):
