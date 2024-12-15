@@ -15,5 +15,7 @@ if __name__ == "__main__":
     logger.info("Starting device.py")
     device = Device(config.devices.device_list[0].ip, config.devices.device_list[0].port)
 
-    device.get_heartbeat()
-    device.get_system_time()
+    #device.get_heartbeat()
+    #device.get_system_time()
+    #logger.warning(device.get_avg_temperature_for_minute())
+    #logger.warning(device.get_uptime_for_minute())

@@ -2,53 +2,10 @@ import struct
 from datetime import datetime
 import logging
 
+from typing import Tuple
 logger = logging.getLogger(__name__)
 
-def get_avg_temperature_for_minute():
-    logger.info("Getting average temperature for the last minute")
-    packet = send.construct_packet(protocol.protocol_function_table["get_avg_temperature_for_minute"], b"")
 
-    payload = send.send_packet_to_esp32(packet)
-
-    if payload is None:
-        logger.error("No response received from ESP32")
-        return
-
-    unix_timestamp: int = struct.unpack('<Q', payload[:8])[0]
-    avg_temp = struct.unpack('<f', payload[8:12])[0]
-
-    logger.debug(f"Unix Timestamp: {unix_timestamp}")
-
-    timestamp = datetime.fromtimestamp(float(unix_timestamp))
-
-    timestamp_str = timestamp.strftime('%Y-%m-%d %H:%M:%S')
-
-    logger.debug("Payload Analysis:")
-    logger.debug(f"  Unix Timestamp: {unix_timestamp} ({timestamp_str} UTC)")
-    logger.debug(f"  Float Value: {avg_temp}")
-
-    return avg_temp, timestamp
-
-
-def get_uptime_for_minute():
-    packet = send.construct_packet(protocol.protocol_function_table["get_uptime_for_minute"], b"")
-
-    payload = send.send_packet_to_esp32(packet)
-
-    unix_timestamp: int = struct.unpack('<Q', payload[:8])[0]
-    uptime = struct.unpack('<f', payload[8:12])[0]
-
-    print(f"Unix Timestamp: {unix_timestamp}")
-
-    timestamp = datetime.fromtimestamp(float(unix_timestamp))
-
-    timestamp_str = timestamp.strftime('%Y-%m-%d %H:%M:%S')
-
-    print("Payload Analysis:")
-    print(f"  Unix Timestamp: {unix_timestamp} ({timestamp_str} UTC)")
-    print(f"  Float Value: {uptime}")
-
-    return uptime, timestamp
 
 def set_control_for_duration():
     control = True
@@ -126,6 +83,57 @@ class Device(object):
         logger.info(f"System time: {timestamp}")
 
         return timestamp
+
+
+    def get_avg_temperature_for_minute(self) -> Tuple[float, datetime] | None:
+        logger.info("Getting average temperature for the last minute")
+        packet = self.construct_packet(self.protocol_function_table["get_avg_temperature_for_minute"], b"")
+
+        payload = self.send_packet(packet)
+
+        if len(payload) == 0:
+            logger.error("No response received from ESP32")
+            return None
+
+        unix_timestamp: int = struct.unpack('<Q', payload[:8])[0]
+        avg_temp = struct.unpack('<f', payload[8:12])[0]
+
+        logger.debug(f"Unix Timestamp: {unix_timestamp}")
+
+        timestamp = datetime.fromtimestamp(float(unix_timestamp))
+
+        timestamp_str = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+        logger.debug(f"  {timestamp_str} UTC")
+        logger.debug(f"  Float Value: {avg_temp}")
+
+        return avg_temp, timestamp
+
+
+    def get_uptime_for_minute(self) -> Tuple[float, datetime] | None:
+        packet = self.construct_packet(self.protocol_function_table["get_uptime_for_minute"], b"")
+
+        payload = self.send_packet(packet)
+
+        if len(payload) == 0:
+            logger.error("No response received")
+            return None
+
+        unix_timestamp: int = struct.unpack('<Q', payload[:8])[0]
+        uptime = struct.unpack('<f', payload[8:12])[0]
+
+        print(f"Unix Timestamp: {unix_timestamp}")
+
+        timestamp = datetime.fromtimestamp(float(unix_timestamp))
+
+        timestamp_str = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+        print("Payload Analysis:")
+        print(f"  Unix Timestamp: {unix_timestamp} ({timestamp_str} UTC)")
+        print(f"  Float Value: {uptime}")
+
+        return uptime, timestamp
+
 
 
     def send_packet(self, packet: bytes, expect_response = True) -> bytes:
