@@ -1,6 +1,7 @@
 import logging
 from time import sleep
 import datetime
+import uuid
 
 from quanta_client.configuration import Configuration
 from quanta_client.api_client import ApiClient
@@ -19,6 +20,9 @@ logger = logging.getLogger(__name__)
 root_logger = logging.getLogger()
 
 if __name__ == "__main__":
+    mac = uuid.getnode()
+    mac_address_str = ':'.join(f'{(mac >> i) & 0xff:02x}' for i in range(0, 8*6, 8)[::-1])
+
     config = Config("config/config.json")
     config.logging.configure_logger(root_logger)
 
@@ -28,7 +32,7 @@ if __name__ == "__main__":
 
 
     quanta_config = Configuration(host=config.server.base_url)
-    client = ApiClient(quanta_config)
+    client = ApiClient(quanta_config, header_name="Agent_MAC", header_value=mac_address_str)
     api = DefaultApi(client)
 
     client = Client(api)
